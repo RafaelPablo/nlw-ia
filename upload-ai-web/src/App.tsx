@@ -1,11 +1,11 @@
-import { Github, FileVideo, Upload, Wand2 } from "lucide-react";
+import { Github, Wand2 } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { Separator } from "./components/ui/separator";
 import { Textarea } from "./components/ui/textarea";
-import { Label } from "./components/ui/label";
-import { Select } from "./components/ui/select";
-import { SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select";
+import { VideoInputForm } from "./components/video-input-form";
 import { Slider } from "./components/ui/slider";
+import { Label } from "./components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./components/ui/select";
 
 export function App() {
   return (
@@ -45,98 +45,72 @@ export function App() {
               />
 
             </div>
+
             <p className="text-sm text-muted-foreground"> 
               Remember: You can use the variable <code className="text-violet-400">{'{transcription}'}</code> on your prompt to add the content of transcription to selected video.
             </p>
           </div>
 
           <aside className="w-80 space-y-6">
-          <form className="space-y-6">
-            <label 
-              htmlFor="video"
-              className="border flex rounded-md aspect-video cursor-pointer border-dashed text-sm flex-col gap-2 items-center justify-center text-muted-foreground hover:bg-primary/5"
-            >
-              <FileVideo className="w-4 h-4"/>
-              Upload video
-            </label>
 
-            <input type="file" id="video" accept="video/mp4" className="sr-only"/>
+          <VideoInputForm />
+      <Separator />
+      
+      <form className="space-y-6">
 
-            <Separator />
+        <div className="space-y-2">
+            <Label> Prompt </Label>
 
-            <div className="space-y-2">
-              <Label htmlFor="transcription-prompt"> Transcription prompt </Label>
-              <Textarea 
-                id="transcription-prompt" 
-                className="h-20 leading-relaxed resize-none"
-                placeholder="Include key words mentioned on the video separated by comma (,)"
-              />
-            </div>
+            <Select>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a prompt..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="title">Youtube title</SelectItem>
+                <SelectItem value="description">Youtube description</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            <Button type="submit" className="w-full">
-              Load video
-              <Upload className="w-4 h-4 ml-2" />
-            </Button>
-          </form>
+          <div className="space-y-2">
+            <Label> Model </Label>
+
+            <Select disabled defaultValue="gpt3.5">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="gpt3.5">GPT 3.5-turbo 16k</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <span className="block text-sm text-muted-foreground italic">
+              You will be able to change this option soon.
+            </span>
+          </div>
 
           <Separator />
 
-          <form className="space-y-6">
+          <div className="space-y-4">
+            <Label> Temperature </Label>
 
-            <div className="space-y-2">
-              <Label> Prompt </Label>
-              
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a prompt..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="title">Youtube title</SelectItem>
-                  <SelectItem value="description">Youtube description</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Slider
+              min={0}
+              max={1}
+              step={0.1} />
 
-            <div className="space-y-2">
-              <Label> Model </Label>
-              
-              <Select disabled defaultValue="gpt3.5">
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="gpt3.5">GPT 3.5-turbo 16k</SelectItem>
-                </SelectContent>
-              </Select>
+            <span className="block text-sm text-muted-foreground italic">
+              Bigger values has a tendency to get a more creative result and with possible errors.
+            </span>
+          </div>
 
-              <span className="block text-sm text-muted-foreground italic"> 
-                You will be able to change this option soon.
-              </span>
-            </div>
+          <Separator />
 
-            <Separator />
-
-            <div className="space-y-4">
-              <Label> Temperature </Label>
-
-              <Slider
-                min={0}
-                max={1}
-                step={0.1}
-              />
-
-              <span className="block text-sm text-muted-foreground italic"> 
-                Bigger values has a tendency to get a more creative result and with possible errors.
-              </span>
-            </div>
-
-            <Separator />
-
-            <Button type="submit" className="w-full">
-              Execute
-              <Wand2 className="w-4 h-4 ml-2" />
-            </Button>
-          </form>
+          <Button type="submit" className="w-full">
+            Execute
+            <Wand2 className="w-4 h-4 ml-2" />
+          </Button>
+        </form>
           </aside>
         </main>
       </div>
