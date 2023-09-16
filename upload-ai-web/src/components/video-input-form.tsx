@@ -6,10 +6,34 @@ import { Button } from "./ui/button";
 import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react"
 import { getFFmpeg } from "@/lib/ffmpeg";
 import { fetchFile } from "@ffmpeg/util";
+import { api } from '@/lib/axios';
+
+type Status = 'waiting' | 'converting' | 'uploading' | 'generating' | 'success'
+
+const StatusMessages = {
+  converting : 'Converting...',
+  uploading : 'Loading...',
+  generating : 'Generating...',
+  success : 'Done!'
+}
 
 export function VideoInputForm() {
   const [videoFile, setVideoFile] = useState< File | null >(null)
+  const [status, setStatus] = useState< Status >('waiting')
+
   const promptInputRef = useRef<HTMLTextAreaElement>(null)
+
+  function handleSelectedFile(event: ChangeEvent<HTMLInputElement>) {
+    const { files } = event.currentTarget
+
+    if (!files) {
+      return
+    }
+
+    const selectedFile = files[0]
+
+    setVideoFile(selectedFile)
+  }
 
   async function convertVideoToAudio(video: File) {
     console.log('convertion started.')
@@ -22,8 +46,8 @@ export function VideoInputForm() {
     //   console.log(log)
     // })
 
-    ffmpeg.on('progress', progress => {
-      console.log('Convert progress: ' + Math.round( progress.progress * 100))
+    await ffmpeg.on('progress', progress => {
+      console.log('Convert progress: ' + Math.round(progress.progress * 100))
     })
 
     await ffmpeg.exec([
@@ -39,6 +63,7 @@ export function VideoInputForm() {
     ])
 
     const data = await ffmpeg.readFile('output.mp3')
+
     const audioFileBlob = new Blob([data], { type: 'audio/mpeg' })
     const audioFile = new File([audioFileBlob], 'audio.mp3', {
       type: 'audio/mpeg',
@@ -47,18 +72,6 @@ export function VideoInputForm() {
     console.log('Convertion finished.')
 
     return audioFile
-  }
-
-  function handleSelectedFile(event: ChangeEvent<HTMLInputElement>) {
-    const { files } = event.currentTarget
-
-    if (!files) {
-      return
-    }
-
-    const selectedFile = files[0]
-
-    setVideoFile(selectedFile)
   }
 
   async function handleUploadVideo(event: FormEvent<HTMLFormElement>) {
@@ -70,10 +83,29 @@ export function VideoInputForm() {
       return
     }
 
+    setStatus('converting')
 
     const audioFile = await convertVideoToAudio(videoFile)
 
-    console.log(audioFile)
+    const data = new FormData()
+
+    data.append('file', audioFile)
+
+    setStatus('uploading')
+
+    const response = await api.post('/videos', data)
+
+    console.log(response.data)
+
+    const videoId = response.data.video.id
+
+    setStatus('generating')
+
+    await api.post(`/videos/${videoId}/transcription`, {
+      prompt,
+    })
+
+    console.log('finished')
 
   }
 
@@ -112,14 +144,24 @@ export function VideoInputForm() {
         <Label htmlFor="transcription-prompt"> Transcription prompt </Label>
         <Textarea
           ref={promptInputRef}
+          disabled={status !== 'waiting'}
           id="transcription-prompt"
           className="h-20 leading-relaxed resize-none"
           placeholder="Include key words mentioned on the video separated by comma (,)" />
       </div>
 
-      <Button type="submit" className="w-full">
-        Load video
-        <Upload className="w-4 h-4 ml-2" />
+      <Button
+        data-success={status === 'success'} 
+        disabled={status !== 'waiting'} 
+        type="submit" 
+        className="w-full data-[success=true]:bg-emerald-400"
+        >
+          {status === 'waiting' ? (
+            <>
+              Load Video 
+              <Upload className="w-4 h-4 ml-2" />
+            </>
+          ) : StatusMessages[status]}
       </Button>
       </form>
     </>
